@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbi's Number Drop · Free Arcade · PNW Kid Software</title>
+<meta name="description" content="A free little arcade game: catch falling numbers that add up to exactly what Orbi needs, and fill the fuel cells to fly home. Plays in your browser. No ads, no accounts, nothing to buy.">
+<meta name="theme-color" content="#1d3557">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../arcade.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="../../" aria-label="PNW Kid Software, home">
+      <img src="../../favicon.svg" alt="" width="34" height="34">
+      <span>PNW Kid Software</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="../../#games">Learning games</a>
+      <a class="nav-arcade" href="../../#arcade">Free Arcade</a>
+    </nav>
+  </div>
+</header>
+
+<main class="arcade-page">
+  <div class="wrap">
+    <div class="game-head">
+      <p class="free-chip">Free Arcade</p>
+      <h1>Orbi's Number Drop</h1>
+      <p>Numbers are falling from the sky. Catch the ones that add up to exactly what Orbi needs, and fill the fuel cells to fly home.</p>
+    </div>
+
+    <div class="cabinet">
+      <p class="marquee" aria-hidden="true">★ Orbi's Number Drop ★</p>
+      <div class="screen">
+        <canvas id="game" role="img" aria-label="Orbi the little alien on a grassy hill at night, catching falling numbers"></canvas>
+
+        <div class="overlay" id="start">
+          <h2>Orbi needs fuel!</h2>
+          <p class="blurb">Catch falling numbers that add up to <b>exactly</b> the number at the top. Hit it right on, and a fuel cell lights up. Five cells, and Orbi blasts off.</p>
+          <div class="row" id="modes">
+            <button class="btn btn-go" data-mode="little">Little<small>make 5 to 10</small></button>
+            <button class="btn btn-go" data-mode="middle">Middle<small>make 10 to 20</small></button>
+            <button class="btn btn-go" data-mode="big">Big<small>make 20 to 40</small></button>
+          </div>
+          <p class="more blurb">Move with <b>← →</b>, or drag Orbi with your finger or mouse.</p>
+        </div>
+
+        <div class="overlay" id="paused" hidden>
+          <h2>Paused</h2>
+          <p class="blurb">Orbi is waiting for you.</p>
+          <div class="row">
+            <button class="btn btn-go" id="resume">▶ Keep going</button>
+            <button class="btn" id="quit">Start over</button>
+          </div>
+        </div>
+
+        <div class="overlay" id="done" hidden>
+          <h2>Blast off! 🚀</h2>
+          <p class="stats" id="done-stats"></p>
+          <p class="best" id="done-best"></p>
+          <div class="row">
+            <button class="btn btn-go" id="again">▶ Play again</button>
+            <button class="btn" id="pick">Pick a size</button>
+          </div>
+          <p class="more">Orbi's whole story is in <a href="../../#maple-leaf-math">Maple Leaf Math</a>, one of our learning games.</p>
+        </div>
+      </div>
+      <div class="cab-controls">
+        <p class="hint">Little rounds, about 2 minutes.</p>
+        <div class="cab-btns">
+          <button class="cab-btn" id="pause" type="button">⏸ Pause</button>
+          <button class="cab-btn" id="mute" type="button">🔊 Sound on</button>
+        </div>
+      </div>
+    </div>
+    <p class="sr-only" aria-live="polite" id="live"></p>
+
+    <div class="how">
+      <section class="win">
+        <div class="win-title"><span>HOW.TXT</span></div>
+        <div class="win-body">
+          <h2>How to play</h2>
+          <ul>
+            <li>The big number at the top is what Orbi needs, like <b>Make 10</b>.</li>
+            <li>Catch numbers that add up to it: 4, then 6. Or 3, 3 and 4.</li>
+            <li>Go over, and Orbi spits them out to start that number again. No harm done.</li>
+            <li>Missed numbers just fall in the grass. There's no losing.</li>
+          </ul>
+        </div>
+      </section>
+      <section class="win">
+        <div class="win-title"><span>CONTROLS.TXT</span></div>
+        <div class="win-body">
+          <h2>Controls</h2>
+          <p><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to move.</p>
+          <p>On a tablet or phone, drag your finger along the bottom, and Orbi follows.</p>
+          <p><kbd>P</kbd> or <kbd>Esc</kbd> to pause.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="free-note">
+      <p><b>This is a Free Arcade game.</b> It's free forever: nothing to unlock, nothing to buy, no ads and no accounts. It's a little warm-up, not one of our full learning adventures.</p>
+      <p>Your best time is saved in this browser on this device, and nothing is sent anywhere.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="fine">© 2026 PNW Kid Software · <a href="../../#arcade">Back to the Free Arcade</a> · <a href="../../">See our learning games</a></p>
+  </div>
+</footer>
+
+<script src="../arcade.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { store, Sound, bindMute, crisp, roundRect, time, randInt, reducedMotion } = window.Arcade;
+
+  const W = 480, H = 360, GROUND = 312;
+  const CELLS = 5;
+  const MODES = {
+    little: { name: 'Little', tMin: 5, tMax: 10, nMax: 5, speed: 40, every: 1.45, hint: true },
+    middle: { name: 'Middle', tMin: 10, tMax: 20, nMax: 9, speed: 48, every: 1.3, hint: false },
+    big: { name: 'Big', tMin: 20, tMax: 40, nMax: 15, speed: 56, every: 1.2, hint: false },
+  };
+
+  const canvas = document.getElementById('game');
+  const view = crisp(canvas, W, H);
+  const ctx = view.ctx;
+  const $ = (id) => document.getElementById(id);
+  const live = $('live');
+
+  // ---------- Scenery, made once ----------
+  const stars = Array.from({ length: 70 }, () => ({
+    x: Math.random() * W, y: Math.random() * (GROUND - 90), r: Math.random() < 0.15 ? 1.6 : 1, p: Math.random() * 6,
+  }));
+  const trees = [12, 40, 70, 150, 182, 300, 336, 452, 470].map((x, i) => ({ x, h: 34 + ((i * 37) % 26) }));
+
+  // ---------- Game state ----------
+  let state = 'title';         // title | play | paused | launch | done
+  let mode = MODES.little, modeKey = 'little';
+  let orbi, items, parts, sum, target, cells, clock, spawnIn, lastXs, toast, sparks, launchT, mood, moodT, shipY;
+  const keys = { left: false, right: false };
+  let aimX = null, dragging = false;
+
+  function reset() {
+    orbi = { x: W / 2, look: 0 };
+    items = []; parts = []; sum = 0; cells = 0; clock = 0; spawnIn = 0.4; lastXs = [];
+    sparks = []; toast = null; launchT = 0; mood = 'ok'; moodT = 0; shipY = 0;
+    target = randInt(mode.tMin, mode.tMax);
+  }
+  reset();
+
+  function newTarget() {
+    let t;
+    do { t = randInt(mode.tMin, mode.tMax); } while (t === target);
+    target = t; parts = []; sum = 0;
+  }
+
+  function say(text, color = '#ffe9a8', secs = 1.7) {
+    toast = { text, color, t: secs, max: secs };
+    live.textContent = text;
+  }
+
+  function spawn() {
+    const need = target - sum;
+    const helpfulFalling = items.some((it) => !it.fade && it.n <= need);
+    let n;
+    if (!helpfulFalling || Math.random() < 0.45) {
+      n = (need <= mode.nMax && Math.random() < 0.55) ? need : randInt(1, Math.min(mode.nMax, need));
+    } else {
+      n = randInt(1, mode.nMax);
+    }
+    let x = 0;
+    for (let tries = 0; tries < 12; tries++) {
+      x = randInt(32, W - 32);
+      if (lastXs.every((lx) => Math.abs(lx - x) > 70)) break;
+    }
+    lastXs = [x, ...lastXs].slice(0, 2);
+    items.push({ x, y: 96, born: 0, n, vy: mode.speed * (0.85 + Math.random() * 0.3), p: Math.random() * 6, fade: 0 });
+  }
+
+  function catchNumber(it) {
+    parts.push(it.n);
+    sum += it.n;
+    burst(it.x, it.y, '#ffd36b', 8);
+    if (sum === target) {
+      cells += 1;
+      Sound.tune([523, 659, 784, 1047], 0.08);
+      burst(orbi.x, GROUND - 30, '#7fffd4', 22);
+      mood = 'happy'; moodT = 1.2;
+      say(`${parts.join(' + ')} = ${target}! Fuel cell ${cells} of ${CELLS}`, '#7fffd4', 2);
+      if (cells >= CELLS) { startLaunch(); return; }
+      newTarget();
+    } else if (sum > target) {
+      Sound.tone(330, 0.25, { to: 110, vol: 0.05 });
+      mood = 'oops'; moodT = 1.2;
+      say(`${sum} is more than ${target}. Orbi spits them out!`, '#ffb4a2', 2.2);
+      burst(orbi.x, GROUND - 30, '#ffb4a2', 12);
+      parts = []; sum = 0;
+    } else {
+      Sound.tone(440 + sum * 18, 0.07);
+      live.textContent = `${parts.join(' + ')} = ${sum}. Make ${target}.`;
+    }
+  }
+
+  function burst(x, y, color, count) {
+    if (reducedMotion) count = Math.min(count, 4);
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2, s = 40 + Math.random() * 90;
+      sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, t: 0.6 + Math.random() * 0.4, color });
+    }
+  }
+
+  function startLaunch() {
+    state = 'launch'; launchT = 0; items.forEach((it) => { it.fade = it.fade || 0.0001; });
+    Sound.tone(110, 2.2, { to: 880, type: 'sawtooth', vol: 0.03 });
+    live.textContent = 'All five fuel cells are full. Blast off!';
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    if (state === 'play') clock += dt;
+    if (state === 'play' || state === 'launch') {
+      // Orbi moves
+      if (state === 'play') {
+        const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        const before = orbi.x;
+        if (dir) { orbi.x += dir * 260 * dt; aimX = null; }
+        else if (aimX !== null) {
+          const d = aimX - orbi.x, step = 420 * dt;
+          orbi.x += Math.abs(d) < step ? d : Math.sign(d) * step;
+        }
+        orbi.x = Math.max(26, Math.min(W - 26, orbi.x));
+        const moved = orbi.x - before;
+        orbi.look += ((moved > 0.3 ? 1 : moved < -0.3 ? -1 : 0) - orbi.look) * Math.min(1, dt * 8);
+      }
+
+      // falling numbers
+      if (state === 'play') {
+        spawnIn -= dt;
+        if (spawnIn <= 0 && items.filter((it) => !it.fade).length < 5) { spawn(); spawnIn = mode.every; }
+      }
+      const oy = GROUND - 26;
+      for (const it of items) {
+        it.p += dt * 3; it.born += dt;
+        if (it.fade) { it.fade += dt * 2.5; it.y += it.vy * dt * 0.5; continue; }
+        it.y += it.vy * dt;
+        if (state === 'play' && Math.abs(it.x - orbi.x) < 32 && it.y > oy - 40 && it.y < oy + 12) {
+          it.caught = true;
+          catchNumber(it);
+          if (state !== 'play') break;
+        } else if (it.y > GROUND - 8) {
+          it.fade = 0.0001;
+        }
+      }
+      items = items.filter((it) => !it.caught && it.fade < 1);
+    }
+
+    if (state === 'launch') {
+      launchT += dt;
+      const shipX = 400;
+      if (launchT < 1.2) orbi.x += (shipX - orbi.x) * Math.min(1, dt * 4);
+      if (launchT > 1.3) shipY -= (40 + (launchT - 1.3) * 260) * dt;
+      if (launchT > 1.3 && !reducedMotion) {
+        for (let i = 0; i < 3; i++) sparks.push({ x: shipX + (Math.random() - 0.5) * 16, y: GROUND - 6 + shipY + 8, vx: (Math.random() - 0.5) * 40, vy: 60 + Math.random() * 60, t: 0.5, color: Math.random() < 0.5 ? '#ffd36b' : '#ff8a5b' });
+      }
+      if (launchT > 3.6) finish();
+    }
+
+    for (const s of sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 120 * dt; s.t -= dt; }
+    sparks = sparks.filter((s) => s.t > 0);
+    if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; }
+    if (moodT > 0) { moodT -= dt; if (moodT <= 0) mood = 'ok'; }
+  }
+
+  // ---------- Draw ----------
+  function draw(t) {
+    view.begin();
+    // sky
+    const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
+    sky.addColorStop(0, '#0b1230'); sky.addColorStop(1, '#23305c');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    for (const s of stars) {
+      ctx.globalAlpha = reducedMotion ? 0.7 : 0.45 + 0.4 * Math.sin(t * 1.5 + s.p);
+      ctx.fillStyle = '#fff'; ctx.fillRect(s.x, s.y, s.r * 2, s.r * 2);
+    }
+    ctx.globalAlpha = 1;
+    // moon
+    ctx.fillStyle = '#f3e9b5'; ctx.beginPath(); ctx.arc(265, 44, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(160,150,100,.35)';
+    [[259, 38, 4], [271, 50, 3], [269, 36, 2.5]].forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); });
+
+    // the water tower on the hill
+    ctx.strokeStyle = '#3d4f7a'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(300, GROUND - 30); ctx.lineTo(312, GROUND - 120);
+    ctx.moveTo(350, GROUND - 30); ctx.lineTo(338, GROUND - 120);
+    ctx.moveTo(303, GROUND - 50); ctx.lineTo(347, GROUND - 90);
+    ctx.moveTo(347, GROUND - 50); ctx.lineTo(303, GROUND - 90);
+    ctx.stroke();
+    ctx.fillStyle = '#3d4f7a';
+    roundRect(ctx, 296, GROUND - 150, 58, 34, 8); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(296, GROUND - 146); ctx.lineTo(325, GROUND - 166); ctx.lineTo(354, GROUND - 146); ctx.fill();
+    ctx.fillStyle = '#e4572e'; ctx.beginPath(); ctx.arc(325, GROUND - 168, 2.5, 0, Math.PI * 2); ctx.fill();
+
+    // hills and trees
+    ctx.fillStyle = '#18392d';
+    ctx.beginPath(); ctx.moveTo(0, GROUND - 24);
+    ctx.quadraticCurveTo(120, GROUND - 52, 240, GROUND - 26); ctx.quadraticCurveTo(360, GROUND - 4, W, GROUND - 34);
+    ctx.lineTo(W, GROUND); ctx.lineTo(0, GROUND); ctx.fill();
+    ctx.fillStyle = '#10261d';
+    for (const tr of trees) {
+      ctx.beginPath(); ctx.moveTo(tr.x - 11, GROUND - 8); ctx.lineTo(tr.x, GROUND - 8 - tr.h); ctx.lineTo(tr.x + 11, GROUND - 8); ctx.fill();
+    }
+    // grass
+    ctx.fillStyle = '#2f6b4a'; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = '#3f8a5f'; ctx.fillRect(0, GROUND, W, 4);
+
+    drawShip(400, GROUND - 6 + shipY, t);
+
+    // falling numbers
+    for (const it of items) drawNumber(it, t);
+
+    // Orbi (hidden once aboard)
+    if (!(state === 'launch' && launchT > 1.2) && state !== 'done') drawOrbi(orbi.x, GROUND - 26, t);
+
+    for (const s of sparks) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.t * 2));
+      ctx.fillStyle = s.color; ctx.fillRect(s.x - 2, s.y - 2, 4, 4);
+    }
+    ctx.globalAlpha = 1;
+
+    if (state !== 'title') drawHud();
+  }
+
+  function drawShip(x, y, t) {
+    // smoke while it's still broken
+    if (cells < CELLS && !reducedMotion) {
+      for (let i = 0; i < 3; i++) {
+        const k = (t * 0.4 + i / 3) % 1;
+        ctx.fillStyle = `rgba(200,205,220,${0.25 * (1 - k)})`;
+        ctx.beginPath(); ctx.arc(x + 14 + k * 10, y - 20 - k * 50, 6 + k * 10, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.save();
+    ctx.translate(x, y);
+    if (cells < CELLS) ctx.rotate(-0.16);
+    else if (state === 'launch' && !reducedMotion) ctx.rotate(Math.sin(t * 40) * 0.02);
+    // dome
+    ctx.fillStyle = 'rgba(150,215,240,.75)';
+    ctx.beginPath(); ctx.ellipse(0, -10, 18, 15, 0, Math.PI, 0); ctx.fill();
+    // body
+    ctx.fillStyle = '#c9cfdb';
+    ctx.beginPath(); ctx.ellipse(0, -6, 48, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9aa3b5';
+    ctx.beginPath(); ctx.ellipse(0, -2, 48, 7, 0, 0, Math.PI); ctx.fill();
+    // fuel cells
+    for (let i = 0; i < CELLS; i++) {
+      const cx = -28 + i * 14;
+      ctx.fillStyle = i < cells ? '#ffd36b' : '#4b5266';
+      ctx.beginPath(); ctx.arc(cx, -5, 4, 0, Math.PI * 2); ctx.fill();
+      if (i < cells) { ctx.fillStyle = 'rgba(255,211,107,.35)'; ctx.beginPath(); ctx.arc(cx, -5, 7, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  function drawNumber(it, t) {
+    const a = (it.fade ? Math.max(0, 1 - it.fade) : 1) * Math.min(1, it.born * 3);
+    const wob = reducedMotion ? 0 : Math.sin(it.p) * 2;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(255,211,107,.25)';
+    ctx.beginPath(); ctx.arc(it.x + wob, it.y, 23, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd36b'; ctx.strokeStyle = '#fff6d8'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(it.x + wob, it.y, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#1d3557';
+    ctx.font = `700 ${it.n > 9 ? 17 : 20}px Fredoka, ui-rounded, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(it.n), it.x + wob, it.y + 1);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawOrbi(x, y, t) {
+    const by = y + (reducedMotion ? 0 : Math.sin(t * 4) * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    ctx.beginPath(); ctx.ellipse(x, GROUND + 3, 20, 4, 0, 0, Math.PI * 2); ctx.fill();
+    const glow = ctx.createRadialGradient(x, by, 10, x, by, 42);
+    glow.addColorStop(0, 'rgba(90,240,220,.35)'); glow.addColorStop(1, 'rgba(90,240,220,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, by, 42, 0, Math.PI * 2); ctx.fill();
+    // antenna
+    ctx.strokeStyle = '#1aa39c'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(x, by - 21); ctx.lineTo(x + 3, by - 34); ctx.stroke();
+    ctx.fillStyle = '#ffc93c'; ctx.beginPath(); ctx.arc(x + 3, by - 36, 4.5, 0, Math.PI * 2); ctx.fill();
+    // side nubs
+    ctx.fillStyle = '#8af0e6';
+    ctx.beginPath(); ctx.arc(x - 25, by - 4, 5, 0, Math.PI * 2); ctx.arc(x + 25, by - 4, 5, 0, Math.PI * 2); ctx.fill();
+    // body
+    const body = ctx.createRadialGradient(x - 7, by - 9, 4, x, by, 24);
+    body.addColorStop(0, '#4fe0d6'); body.addColorStop(1, '#14918d');
+    ctx.fillStyle = body; ctx.beginPath(); ctx.arc(x, by, 23, 0, Math.PI * 2); ctx.fill();
+    // eyes
+    const lx = orbi.look * 2.5;
+    if (mood === 'happy') {
+      ctx.strokeStyle = '#0d2b33'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(x - 8, by - 3, 5, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x + 8, by - 3, 5, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(x - 8, by - 5, 7, 0, Math.PI * 2); ctx.arc(x + 8, by - 5, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0d2b33';
+      ctx.beginPath(); ctx.arc(x - 8 + lx, by - 4, 3.6, 0, Math.PI * 2); ctx.arc(x + 8 + lx, by - 4, 3.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - 7 + lx, by - 7, 1.6, 1.6); ctx.fillRect(x + 9 + lx, by - 7, 1.6, 1.6);
+    }
+    // mouth
+    ctx.strokeStyle = '#0d2b33'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (mood === 'oops') ctx.arc(x, by + 9, 3.5, 0, Math.PI * 2);
+    else ctx.arc(x, by + 5, 7, Math.PI * 0.2, Math.PI * 0.8);
+    ctx.stroke();
+  }
+
+  function drawHud() {
+    // what Orbi needs
+    ctx.fillStyle = 'rgba(10,14,40,.72)';
+    roundRect(ctx, 10, 10, 196, 64, 10); ctx.fill();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#ffe9a8'; ctx.font = '700 28px Fredoka, ui-rounded, sans-serif';
+    ctx.fillText(`Make ${target}`, 22, 42);
+    ctx.fillStyle = '#d7defa'; ctx.font = '600 15px Fredoka, ui-rounded, sans-serif';
+    let line;
+    if (!parts.length) line = 'Catch a number!';
+    else line = `${parts.join(' + ')} = ${sum}`;
+    if (mode.hint && parts.length && sum < target) line += `   ${target - sum} more`;
+    ctx.fillText(line, 22, 63);
+
+    // fuel and clock
+    ctx.fillStyle = 'rgba(10,14,40,.72)';
+    roundRect(ctx, W - 156, 10, 146, 64, 10); ctx.fill();
+    ctx.fillStyle = '#d7defa'; ctx.font = '600 13px Fredoka, ui-rounded, sans-serif';
+    ctx.fillText('FUEL', W - 144, 30);
+    for (let i = 0; i < CELLS; i++) {
+      ctx.fillStyle = i < cells ? '#ffd36b' : '#3a4366';
+      roundRect(ctx, W - 106 + i * 18, 19, 14, 14, 3); ctx.fill();
+    }
+    ctx.fillStyle = '#d7defa'; ctx.fillText('TIME', W - 144, 60);
+    ctx.fillStyle = '#fff'; ctx.font = '700 18px Fredoka, ui-rounded, sans-serif';
+    ctx.fillText(time(clock), W - 104, 61);
+
+    if (toast) {
+      const a = Math.min(1, toast.t * 2);
+      ctx.globalAlpha = a;
+      ctx.font = '700 17px Fredoka, ui-rounded, sans-serif';
+      const w = Math.min(W - 30, ctx.measureText(toast.text).width + 28);
+      ctx.fillStyle = 'rgba(10,14,40,.82)';
+      roundRect(ctx, (W - w) / 2, 88, w, 32, 16); ctx.fill();
+      ctx.fillStyle = toast.color; ctx.textAlign = 'center';
+      ctx.fillText(toast.text, W / 2, 110, W - 44);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------- Screens ----------
+  function bringIntoView() {
+    const cab = document.querySelector('.cabinet');
+    const r = cab.getBoundingClientRect();
+    if (r.top < 64 || r.bottom > window.innerHeight) cab.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+  const screens = { start: $('start'), paused: $('paused'), done: $('done') };
+  function show(name) {
+    for (const [k, el] of Object.entries(screens)) el.hidden = k !== name;
+    const btn = name && screens[name].querySelector('button');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  function bestKey() { return `pnw-arcade-numberdrop-best-${modeKey}`; }
+
+  function showBests() {
+    for (const b of screens.start.querySelectorAll('[data-mode]')) {
+      const best = Number(store.get(`pnw-arcade-numberdrop-best-${b.dataset.mode}`));
+      const small = b.querySelector('small');
+      const base = small.dataset.base || small.textContent;
+      small.dataset.base = base;
+      small.textContent = best ? `${base} · best ${time(best)}` : base;
+    }
+  }
+
+  function begin(key) {
+    Sound.unlock();
+    modeKey = key; mode = MODES[key];
+    reset();
+    state = 'play';
+    show(null);
+    bringIntoView();
+    say(`Make ${target}!`, '#ffe9a8', 1.6);
+  }
+
+  function finish() {
+    state = 'done';
+    const prev = Number(store.get(bestKey()));
+    const isBest = !prev || clock < prev;
+    if (isBest) store.set(bestKey(), String(Math.round(clock * 10) / 10));
+    $('done-stats').textContent = `Orbi is on the way home. You filled all ${CELLS} fuel cells in ${time(clock)}.`;
+    $('done-best').textContent = isBest
+      ? (prev ? `That's your best time on ${mode.name}!` : `Your first time on ${mode.name}. Can you beat it?`)
+      : `Your best on ${mode.name} is ${time(prev)}.`;
+    Sound.tune([523, 659, 784, 659, 784, 1047], 0.11);
+    show('done');
+  }
+
+  function pause() {
+    if (state !== 'play') return;
+    state = 'paused'; keys.left = keys.right = false; show('paused');
+  }
+  function resume() {
+    if (state !== 'paused') return;
+    state = 'play'; show(null);
+  }
+  function toTitle() {
+    state = 'title'; reset(); showBests(); show('start');
+  }
+
+  screens.start.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mode]');
+    if (b) begin(b.dataset.mode);
+  });
+  $('resume').addEventListener('click', resume);
+  $('quit').addEventListener('click', toTitle);
+  $('again').addEventListener('click', () => begin(modeKey));
+  $('pick').addEventListener('click', toTitle);
+  $('pause').addEventListener('click', () => (state === 'paused' ? resume() : pause()));
+  bindMute($('mute'));
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  window.addEventListener('blur', pause);
+
+  // ---------- Input ----------
+  const LEFT = ['ArrowLeft', 'a', 'A'], RIGHT = ['ArrowRight', 'd', 'D'];
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (state === 'play') {
+      if (LEFT.includes(e.key)) { keys.left = true; e.preventDefault(); }
+      else if (RIGHT.includes(e.key)) { keys.right = true; e.preventDefault(); }
+      else if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { pause(); e.preventDefault(); }
+      else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
+    } else if (state === 'paused' && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) {
+      resume(); e.preventDefault();
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (LEFT.includes(e.key)) keys.left = false;
+    if (RIGHT.includes(e.key)) keys.right = false;
+  });
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (state !== 'play') return;
+    dragging = true; aimX = view.toLogical(e).x;
+    canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (state !== 'play') return;
+    if (dragging || e.pointerType === 'mouse') aimX = view.toLogical(e).x;
+  });
+  const stopDrag = () => { dragging = false; };
+  canvas.addEventListener('pointerup', stopDrag);
+  canvas.addEventListener('pointercancel', stopDrag);
+
+  // ---------- Loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (state !== 'paused') update(dt);
+    draw(now / 1000);
+    requestAnimationFrame(frame);
+  }
+  showBests();
+  requestAnimationFrame(frame);
+  if (document.fonts && document.fonts.load) document.fonts.load('700 20px Fredoka');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+/* Free Arcade: the cabinet around each little game. Loads after ../../style.css,
+   so it reuses the site's colors, top bar, buttons and Fredoka. */
+
+.arcade-page { padding: 32px 0 72px; }
+.game-head { max-width: 780px; margin: 0 auto 22px; text-align: center; }
+.game-head h1 { font-size: clamp(30px, 5.4vw, 48px); font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+@media (prefers-color-scheme: dark) { .game-head h1 { color: #ffe9a8; } }
+.game-head p { margin: 0; color: var(--muted); font-size: 18px; }
+.free-chip {
+  display: inline-block; margin: 0 0 10px; padding: 3px 12px; border-radius: 999px;
+  background: var(--yellow); color: #23262e; font: 600 14px "Fredoka", sans-serif;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+
+/* ---------- The cabinet ---------- */
+.cabinet {
+  /* Shrink on short screens so the whole cabinet fits under the top bar. --chrome is everything that isn't the screen. */
+  max-width: min(780px, max(400px, calc((100vh - var(--chrome, 200px)) * var(--ar, 1.3333) + 48px)));
+  max-width: min(780px, max(400px, calc((100svh - var(--chrome, 200px)) * var(--ar, 1.3333) + 48px)));
+  margin: 0 auto; scroll-margin-top: 72px;
+  background: linear-gradient(180deg, #3b2a6b, #221640);
+  border-radius: 24px 24px 14px 14px; padding: 14px 18px 16px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.15), inset 0 -5px 0 rgba(0,0,0,.35), 8px 10px 0 rgba(0,0,0,.2);
+}
+.marquee {
+  margin: 0 0 12px; padding: 8px 10px; border-radius: 10px; text-align: center;
+  background: #12082a; color: #ffe9a8; font: 700 clamp(16px, 3.4vw, 22px)/1.2 "Fredoka", sans-serif;
+  letter-spacing: .14em; text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255, 201, 60, .65);
+  box-shadow: inset 0 0 0 2px rgba(255, 201, 60, .35);
+}
+.screen {
+  position: relative; overflow: hidden; border-radius: 12px; background: #000;
+  border: 6px solid #0b0618; aspect-ratio: 4 / 3;
+}
+.screen.wide { aspect-ratio: 16 / 9; }
+.screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.screen::after { /* faint scanlines, like the old monitor */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0 1px, transparent 1px 3px);
+}
+
+/* Title, pause and finish screens sit on top of the canvas */
+.overlay {
+  position: absolute; inset: 0; z-index: 2; overflow: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px; text-align: center; color: #fff8e7;
+  background: rgba(12, 8, 30, .78);
+}
+.overlay { justify-content: safe center; }
+.overlay[hidden] { display: none; }
+.overlay h2 { margin: 0; font-size: clamp(22px, 4.6vw, 34px); color: #ffe9a8; }
+.overlay p { margin: 0; max-width: 34em; font-size: clamp(14px, 2.4vw, 17px); line-height: 1.45; }
+.overlay a { color: #ffe9a8; }
+.overlay .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.overlay .btn { font-size: clamp(15px, 2.6vw, 18px); padding: 7px 14px; }
+.overlay .btn small { display: block; font-size: 12px; font-weight: 500; opacity: .75; }
+.overlay .stats { font: 600 clamp(15px, 2.6vw, 19px) "Fredoka", sans-serif; color: #fff; }
+.overlay .best { color: #7fe0d3; }
+.overlay .more { font-size: 14px; opacity: .9; }
+/* Phones: the screen is short, so trim the title screens to what matters */
+@media (max-width: 560px) {
+  .overlay { gap: 6px; padding: 8px; }
+  .overlay h2 { font-size: 20px; }
+  .overlay .blurb { display: none; }
+  .overlay .btn { padding: 5px 9px; font-size: 14px; }
+  .overlay .btn small { font-size: 10px; }
+  .overlay .stats { font-size: 14px; }
+  .overlay .best, .overlay .more { font-size: 12px; }
+}
+
+/* Buttons under the screen */
+.cab-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.cab-controls .hint { color: #cfc6ea; font-size: 14px; margin: 0; }
+.cab-btn {
+  font: 600 14px "Fredoka", sans-serif; color: #fff8e7; cursor: pointer;
+  background: #4a3884; border: 2px solid; border-color: #7a66c2 #1a1033 #1a1033 #7a66c2;
+  border-radius: 6px; padding: 6px 12px;
+}
+.cab-btn:active { border-color: #1a1033 #7a66c2 #7a66c2 #1a1033; }
+.cab-btn:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 2px; }
+.cab-btns { display: flex; gap: 8px; }
+
+/* ---------- Below the cabinet ---------- */
+.how { max-width: 780px; margin: 28px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.how .win-body { background: var(--panel-2); height: calc(100% - 30px); }
+.how h2 { font-size: 21px; }
+.how p, .how li { color: var(--muted); }
+.how p { margin: 0 0 8px; }
+.how ul { margin: 0; padding-left: 20px; }
+.how kbd {
+  font: 600 13px ui-monospace, Menlo, monospace; padding: 1px 6px; border-radius: 4px;
+  background: var(--panel); border: 1px solid var(--lo); color: var(--ink);
+}
+@media (max-width: 700px) { .how { grid-template-columns: 1fr; } }
+
+.free-note {
+  max-width: 780px; margin: 24px auto 0; padding: 16px 20px; border-radius: 12px;
+  border: 2px dashed var(--teal); color: var(--muted); font-size: 16px;
+}
+.free-note b { color: var(--ink); }
+.free-note p { margin: 0 0 8px; }
+.free-note p:last-child { margin: 0; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

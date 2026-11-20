@@ -78,6 +78,9 @@ a { color: var(--link); }
 .bar nav { display: flex; gap: 18px; font-size: 15px; flex-wrap: wrap; }
 .bar nav a { color: #fff8e7; opacity: .85; text-decoration: none; font-weight: 600; }
 .bar nav a:hover { opacity: 1; text-decoration: underline; }
+/* The Free Arcade gets its own pill, so it never reads as one of the paid games */
+.bar nav a.nav-arcade { color: #23262e; background: var(--yellow); opacity: 1; padding: 0 12px; border-radius: 999px; }
+.bar nav a.nav-arcade:hover { text-decoration: none; filter: brightness(1.06); }
 @media (max-width: 620px) {
   .bar { position: static; }
   .bar .wrap { padding-top: 8px; padding-bottom: 8px; }
@@ -347,6 +350,62 @@ a { color: var(--link); }
 .test-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; margin-top: 28px; }
 @media (max-width: 860px) { .test-grid { grid-template-columns: 1fr; } }
 
+/* Free Arcade: an arcade at night, so it looks nothing like the game cards up top */
+.arcade {
+  background: #1b1236; color: #e8e2ff;
+  background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+.arcade h2 { color: #ffe9a8; }
+.arcade .intro { color: #cfc6ea; }
+.arcade a { color: #ffe9a8; }
+.arcade a.btn { color: #23262e; }
+.arcade-sign {
+  display: inline-block; margin: 0 0 14px; padding: 6px 16px; border-radius: 10px;
+  background: #12082a; color: #ffc93c; font: 700 18px "Fredoka", sans-serif;
+  letter-spacing: .16em; text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255, 201, 60, .7);
+  box-shadow: inset 0 0 0 2px rgba(255, 201, 60, .45), 0 0 22px rgba(255, 201, 60, .18);
+}
+.cabs { display: grid; grid-template-columns: 1fr 1fr minmax(180px, .55fr); gap: 26px; align-items: stretch; }
+.cab {
+  background: linear-gradient(180deg, #3b2a6b, #251845);
+  border-radius: 20px 20px 12px 12px; padding: 14px 14px 18px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.14), inset 0 -5px 0 rgba(0,0,0,.35), 6px 8px 0 rgba(0,0,0,.3);
+  display: flex; flex-direction: column;
+}
+.cab-screen { display: block; border: 5px solid #0b0618; border-radius: 10px; overflow: hidden; background: #000; position: relative; }
+.cab-screen svg { display: block; width: 100%; height: auto; }
+.cab-screen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0 1px, transparent 1px 3px);
+}
+.cab-body { padding: 14px 4px 0; display: flex; flex-direction: column; flex: 1; }
+.cab-body h3 { color: #fff8e7; margin: 8px 0 6px; font-size: 22px; }
+.cab-body p { margin: 0 0 10px; }
+.cab .tags { color: #cfc6ea; }
+.cab-who { font-size: 15px; color: #cfc6ea; margin-top: auto !important; }
+.cab .btn { align-self: flex-start; margin-top: 4px; }
+.cab-soon { align-items: center; justify-content: center; text-align: center; opacity: .8; }
+.soon-screen {
+  margin: 0 0 12px; width: 100%; padding: 28px 10px; border-radius: 10px; border: 5px solid #0b0618;
+  background: #0d1f14; color: #7dff9b; font: 700 22px/1.3 ui-monospace, Menlo, monospace;
+  text-shadow: 0 0 6px rgba(125, 255, 155, .6);
+}
+.cab-soon p:last-child { margin: 0; color: #cfc6ea; font-size: 15px; }
+.arcade-rules { list-style: none; padding: 0; margin: 36px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.arcade-rules li { padding: 14px 16px; border-radius: 12px; border: 2px dashed rgba(255, 201, 60, .45); font-size: 15px; color: #cfc6ea; }
+.arcade-rules b { color: #ffe9a8; display: block; font-family: "Fredoka", sans-serif; font-size: 17px; }
+@media (max-width: 960px) {
+  .cabs { grid-template-columns: 1fr 1fr; }
+  .cab-soon { grid-column: 1 / -1; flex-direction: row; gap: 16px; }
+  .cab-soon .soon-screen { width: auto; margin: 0; padding: 10px 18px; font-size: 16px; }
+  .cab-soon .soon-screen br { display: none; }
+}
+@media (max-width: 680px) {
+  .cabs, .arcade-rules { grid-template-columns: 1fr; }
+}
+
 /* FAQ */
 .faq { background: var(--panel); }
 @media (prefers-color-scheme: dark) { .faq { background: #1a212c; } }
@@ -367,4 +426,5 @@ details p { margin: 0 0 18px; color: var(--muted); }
 .foot-top p { margin: 0; opacity: .85; }
 .foot .brand { color: #fff8e7; }
 .foot-links { list-style: none; padding: 0; margin: 22px 0; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.foot-arcade { margin: 0 0 18px; opacity: .9; }
 .fine { margin: 0; opacity: .75; font-size: 14px; }
