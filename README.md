@@ -1,6 +1,6 @@
 # PNW Kid Software website
 
-The home page for PNW Kid Software's Seattle learning games: <https://pnw-kid-software.github.io/> (later <https://pnw.kids/>).
+The home page for PNW Kid Software's Seattle learning games: <https://pnw.kids/>.
 
 Plain HTML and CSS, no build step, no scripts, no cookies, no trackers. The Fredoka font is self-hosted (OFL, see `fonts/`).
 
@@ -10,4 +10,4 @@ Plain HTML and CSS, no build step, no scripts, no cookies, no trackers. The Fred
 
 To add a game: copy its banner and icon into `img/games/`, add a card in `index.html`, add a pin to the map (`viewBox` 500×600, north at the top), and add it to the footer links once it has its own site.
 
-To switch to pnw.kids: add a `CNAME` file containing `pnw.kids`, set the custom domain under Settings → Pages, and point the domain's DNS at GitHub Pages.
+The domain: `pnw.kids` is registered at Porkbun. Its DNS has an ALIAS record for the root and a CNAME for `www`, both pointing at `pnw-kid-software.github.io`. The `CNAME` file here and the custom domain under Settings → Pages tell GitHub to answer for it, with HTTPS enforced. The old github.io address redirects.
