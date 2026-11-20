@@ -332,8 +332,8 @@ a { color: var(--link); }
   .crt { max-width: 380px; width: 100%; }
 }
 
-/* Kid-tested, teacher-checked */
-.test-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 28px; }
+/* Kid-tested */
+.test-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; margin-top: 28px; }
 @media (max-width: 860px) { .test-grid { grid-template-columns: 1fr; } }
 
 /* FAQ */
