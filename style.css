@@ -183,6 +183,18 @@ a { color: var(--link); }
   .sticker { margin: 30px auto 0; }
 }
 
+/* Homepage film */
+.film-wrap { margin-top: 36px; }
+.film-window { max-width: 960px; margin: 0 auto; }
+#film {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #102830;
+  scroll-margin-top: 110px;
+}
+
 /* ---------- Sections ---------- */
 .section { padding: 72px 0; }
 @media (max-width: 620px) { .section { padding: 52px 0; } }
