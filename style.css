@@ -127,16 +127,27 @@ a { color: var(--link); }
 @media (prefers-color-scheme: dark) {
   .hero { background: linear-gradient(180deg, #0f1a2b 0%, #1d3048 60%, #2b4560 100%); }
 }
-.rain {
-  position: absolute; inset: -40px 0 0; z-index: -1; opacity: .35;
-  background-image:
-    repeating-linear-gradient(105deg, transparent 0 22px, rgba(255,255,255,.55) 22px 23px, transparent 23px 60px),
-    repeating-linear-gradient(100deg, transparent 0 40px, rgba(255,255,255,.35) 40px 41px, transparent 41px 90px);
-  background-size: 120px 140px, 180px 200px;
-  animation: rain 1.1s linear infinite;
+.rain { /* A tilted sheet behind the hero. Its two layers hold upright streaks and slide straight down the sheet. */
+  position: absolute; inset: -320px -160px; z-index: -1; pointer-events: none;
+  transform: rotate(12deg);
 }
-@keyframes rain { to { background-position: -20px 140px, -30px 200px; } }
-@media (prefers-reduced-motion: reduce) { .rain { animation: none; } }
+.rain::before, .rain::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; will-change: transform;
+}
+/* Each layer starts one tile above the sheet and falls exactly one tile, so the end of the loop is the start of the next. */
+.rain::before {
+  top: -400px; opacity: .34;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Cpath d='M22 14v52M97 128v64M160 44v40M231 214v58M281 96v46M60 262v54M190 318v50M130 196v34' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 300px 400px;
+  animation: rain-near .8s linear infinite;
+}
+.rain::after {
+  top: -300px; opacity: .2;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='300'%3E%3Cpath d='M18 20v28M70 150v34M118 60v24M165 210v30M200 110v26M44 236v28' fill='none' stroke='white' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 220px 300px;
+  animation: rain-far 1.05s linear infinite;
+}
+@keyframes rain-near { to { transform: translate3d(0, 400px, 0); } }
+@keyframes rain-far { to { transform: translate3d(0, 300px, 0); } }
+@media (prefers-reduced-motion: reduce) { .rain::before, .rain::after { animation: none; } }
 
 .skyline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 220px; z-index: -1; }
 .skyline .mtn { fill: #a9b8c9; }
