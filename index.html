@@ -140,8 +140,8 @@
 <section class="section games" id="games">
   <div class="wrap">
     <p class="kicker">The neighborhoods</p>
-    <h2>Eight games, eight Seattle neighborhoods</h2>
-    <p class="intro">Each game happens in a real part of town: the parks, the streets, the lakes and the rain. The shops and characters are made up, but if you live here, you'll recognize the way home.</p>
+    <h2>Eight Seattle neighborhoods (plus one bug)</h2>
+    <p class="intro">Each game happens in a real part of town: the parks, the streets, the lakes and the rain. The shops and characters are made up, but if you live here, you'll recognize the way home. And then there's BugJug, which goes wherever the bugs are.</p>
 
     <div class="games-layout">
       <div class="win map-win">
@@ -176,7 +176,7 @@
             <text class="wlabel small" x="268" y="402" text-anchor="middle">Union</text>
             <text class="wlabel small" x="258" y="190" text-anchor="middle">Green</text>
             <text class="wlabel small" x="258" y="201" text-anchor="middle">Lake</text>
-            <text class="wlabel" x="132" y="520" text-anchor="middle">Elliott Bay</text>
+            <text class="wlabel" x="150" y="555" text-anchor="middle">Elliott Bay</text>
             <text class="plabel" x="330" y="560" text-anchor="middle">Downtown</text>
 
             <a href="#licton-springs-language" class="pin"><g transform="translate(244 88)"><circle r="24"/><image href="img/games/lictonspringslanguage-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/><text y="42" text-anchor="middle">Licton Springs</text></g></a>
@@ -186,6 +186,9 @@
             <a href="#wallingford-writing" class="pin"><g transform="translate(262 290)"><circle r="24"/><image href="img/games/wallingfordwriting-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/><text x="-30" y="5" text-anchor="end">Wallingford</text></g></a>
             <a href="#frelard-feelings" class="pin"><g transform="translate(150 244)"><circle r="24"/><image href="img/games/frelardfeelings-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/><text y="-32" text-anchor="middle">Frelard</text></g></a>
             <a href="#cascade-cardboard-creator" class="pin"><g transform="translate(276 462)"><circle r="24"/><image href="img/games/cascadecardboardcreator-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/><text x="-30" y="5" text-anchor="end">Cascade</text></g></a>
+            <!-- BugJug isn't from one neighborhood, so it flies over the Sound -->
+            <path class="trail" d="M118 420 C96 400 60 398 50 418 C40 440 70 452 82 436"/>
+            <a href="#bugjug" class="pin pin-fly"><g transform="translate(86 470)"><g class="bob"><ellipse class="wing" cx="-26" cy="-14" rx="16" ry="8" transform="rotate(-25 -26 -14)"/><ellipse class="wing" cx="26" cy="-14" rx="16" ry="8" transform="rotate(25 26 -14)"/><circle r="24"/><image href="img/games/bugjug-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/></g><text y="42" text-anchor="middle">BugJug</text><text class="sub" y="58" text-anchor="middle">just flying by</text></g></a>
             <a href="#capitol-hill-coding" class="pin"><g transform="translate(344 446)"><circle r="24"/><image href="img/games/capitolhillcoding-icon.png" x="-21" y="-21" width="42" height="42" clip-path="url(#round)"/><text x="0" y="42" text-anchor="middle">Capitol Hill</text></g></a>
           </svg>
           <p class="map-note">Tap a neighborhood to jump to its game.</p>
@@ -293,6 +296,21 @@
             <p>Pull a wagon around the neighborhood, collect clean cardboard and sort the rest, then build a boat that floats and a plane that glides. Test it, fix it, try again.</p>
             <p class="status">Coming soon for iPhone, iPad and Android.</p>
             <a class="btn btn-small" href="https://cascadecardboardcreator.github.io/">Visit Cascade Cardboard Creator</a>
+          </div>
+        </article>
+
+        <article class="card card-bonus" id="bugjug">
+          <p class="ribbon">The odd one out</p>
+          <img class="shot shot-contain" src="img/games/bugjug.jpg" alt="BugJug: three cartoon bug pets in glass jars on a shelf" loading="lazy" width="900" height="385">
+          <div class="card-body">
+            <div class="card-head">
+              <img src="img/games/bugjug-icon.png" alt="" width="52" height="52" loading="lazy">
+              <div><h3>BugJug</h3><p class="tags"><span class="tag t-bug">Bugs &amp; nature</span><span>All ages</span></p></div>
+            </div>
+            <p>BugJug doesn't live in one neighborhood, because bugs don't either. It doesn't quite fit the mold, but it's a family favorite. Snap a photo of a real bug, and BugJug figures out what it is right on the phone, then turns it into a cute pet in a jar on your shelf. Feed it, play with it, and go exploring with a bug net.</p>
+            <p>Same deal as the rest: free to try with five bugs, then $4.99 once for everything.</p>
+            <p class="status live"><b>Out now</b> on the App Store for iPhone and iPad.</p>
+            <a class="btn btn-small" href="https://timothycrosley.github.io/bug-jug.github.io/">Visit BugJug</a>
           </div>
         </article>
 
@@ -416,6 +434,7 @@
       <li><a href="https://wallingford-writing.github.io/">Wallingford Writing</a></li>
       <li><a href="https://frelardfeelings.github.io/">Frelard Feelings</a></li>
       <li><a href="https://cascadecardboardcreator.github.io/">Cascade Cardboard Creator</a></li>
+      <li><a href="https://timothycrosley.github.io/bug-jug.github.io/">BugJug</a></li>
     </ul>
     <p class="fine">© 2026 PNW Kid Software · No subscriptions, no ads, no tracking · <a href="mailto:bugjugapp@gmail.com">Contact us</a></p>
   </div>

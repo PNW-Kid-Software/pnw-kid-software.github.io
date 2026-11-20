@@ -232,6 +232,12 @@ a { color: var(--link); }
 .map .pin:hover circle, .map .pin:focus circle { stroke: var(--red); stroke-width: 5; }
 .map .pin:focus { outline: none; }
 .map .pin:focus-visible circle { stroke: var(--red); stroke-width: 6; }
+.map .trail { fill: none; stroke: #fff; stroke-width: 2.5; stroke-dasharray: 2 6; stroke-linecap: round; opacity: .9; }
+.map .wing { fill: rgba(255,255,255,.85); stroke: var(--navy); stroke-width: 2; }
+.map .pin .sub { font-size: 12px; font-style: italic; font-weight: 500; }
+.map .bob { animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .map .bob { animation: none; } }
 .map-note { margin: 8px 4px 2px; font-size: 14px; color: var(--muted); text-align: center; }
 
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -257,6 +263,15 @@ a { color: var(--link); }
 .t-type { background: #e07a1f; }
 .t-feel { background: #4f86c6; }
 .t-make { background: #7a8b2f; }
+.t-bug { background: #3f8f3a; }
+.card-bonus { position: relative; border: 3px dashed var(--teal); }
+.shot-contain { object-fit: contain; background: #2b1a14; }
+.ribbon {
+  position: absolute; top: 12px; left: -6px; z-index: 1; margin: 0;
+  background: var(--yellow); color: #23262e; font: 600 14px "Fredoka", sans-serif;
+  padding: 4px 12px 4px 14px; border-radius: 0 6px 6px 0; box-shadow: 2px 2px 0 rgba(0,0,0,.25);
+  text-transform: uppercase; letter-spacing: .05em;
+}
 .status { font-size: 15px; color: var(--muted); margin-top: auto !important; }
 .status.live b { color: var(--green); }
 @media (prefers-color-scheme: dark) { .status.live b { color: #6fd39b; } }
