@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Widget's Path · Free Arcade · PNW Kid Software</title>
+<meta name="description" content="A free little coding puzzle: line up arrow blocks to steer Widget the robot around Volunteer Park to his battery. Eight puzzles. Plays in your browser. No ads, no accounts, nothing to buy.">
+<meta name="theme-color" content="#1d3557">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../arcade.css">
+<style>
+  /* The program: arrow blocks to pick from, the line of blocks Widget will run, and the Run button */
+  .prog { margin-top: 12px; display: grid; gap: 10px; }
+  .prog-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .palette, .run-row { display: flex; gap: 8px; }
+  .blk {
+    width: 48px; height: 44px; padding: 0; cursor: pointer; touch-action: manipulation;
+    font: 700 24px/1 "Fredoka", ui-rounded, sans-serif; color: #12233b;
+    background: #7fe0d3; border-radius: 8px;
+    border: 3px solid; border-color: #c9fff6 #2a8f84 #2a8f84 #c9fff6;
+  }
+  .blk:active { border-color: #2a8f84 #c9fff6 #c9fff6 #2a8f84; }
+  .blk:focus-visible, .run:focus-visible, .tool:focus-visible { outline: 3px dashed var(--yellow); outline-offset: 2px; }
+  .run {
+    font: 700 18px "Fredoka", sans-serif; color: #23262e; cursor: pointer;
+    background: var(--yellow); padding: 8px 18px; border-radius: 8px;
+    border: 3px solid; border-color: #fff3c4 #b98700 #b98700 #fff3c4;
+  }
+  .run:disabled, .tool:disabled, .blk:disabled { opacity: .5; cursor: default; }
+  .tool {
+    font: 600 14px "Fredoka", sans-serif; color: #fff8e7; cursor: pointer;
+    background: #4a3884; border-radius: 8px; padding: 6px 12px;
+    border: 2px solid; border-color: #7a66c2 #1a1033 #1a1033 #7a66c2;
+  }
+  .strip {
+    list-style: none; margin: 0; padding: 8px; min-height: 62px; border-radius: 10px;
+    background: #12082a; box-shadow: inset 0 0 0 2px rgba(127, 224, 211, .25);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; counter-reset: step;
+  }
+  .strip:empty::before { content: attr(data-empty); color: #9d93c4; font-size: 15px; padding-left: 6px; }
+  .strip .blk { width: 40px; height: 40px; font-size: 20px; position: relative; }
+  .strip .blk::after {
+    counter-increment: step; content: counter(step);
+    position: absolute; top: -7px; right: -6px; font: 600 10px/16px "Fredoka", sans-serif;
+    width: 16px; height: 16px; border-radius: 50%; background: #2b1d55; color: #cfc6ea;
+  }
+  .strip .blk.now { background: var(--yellow); transform: translateY(-3px); }
+  .strip .blk.bad { background: #e4572e; color: #fff; }
+  .slots { color: #9d93c4; font-size: 13px; text-align: right; margin: -4px 2px 0; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="../../" aria-label="PNW Kid Software, home">
+      <img src="../../favicon.svg" alt="" width="34" height="34">
+      <span>PNW Kid Software</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="../../#games">Learning games</a>
+      <a class="nav-arcade" href="../../#arcade">Free Arcade</a>
+    </nav>
+  </div>
+</header>
+
+<main class="arcade-page">
+  <div class="wrap">
+    <div class="game-head">
+      <p class="free-chip">Free Arcade</p>
+      <h1>Widget's Path</h1>
+      <p>Widget the robot is low on power. Line up arrow blocks to plan his route across the park, then press Run and watch him follow your program.</p>
+    </div>
+
+    <div class="cabinet" style="--chrome: 360px">
+      <p class="marquee" aria-hidden="true">★ Widget's Path ★</p>
+      <div class="screen">
+        <canvas id="game" role="img" aria-label="Widget the robot on a grid of park tiles, with a battery to reach"></canvas>
+
+        <div class="overlay" id="start">
+          <h2>Widget needs a charge!</h2>
+          <p class="blurb">Tap the arrows to build a program. Each arrow moves Widget one square. Press <b>Run</b> and he follows it, step by step. Eight puzzles, then Widget is fully charged.</p>
+          <div class="row">
+            <button class="btn btn-go" id="go">▶ Start<small id="go-best">8 puzzles</small></button>
+          </div>
+        </div>
+
+        <div class="overlay" id="cleared" hidden>
+          <h2 id="cleared-title">Charged up!</h2>
+          <p id="cleared-text"></p>
+          <div class="row"><button class="btn btn-go" id="next">Next puzzle ▶</button></div>
+        </div>
+
+        <div class="overlay" id="done" hidden>
+          <h2>Fully charged! 🔋</h2>
+          <p class="stats" id="done-stats"></p>
+          <p class="best" id="done-best"></p>
+          <div class="row">
+            <button class="btn btn-go" id="again">▶ Play again</button>
+          </div>
+          <p class="more">Widget's whole story is in <a href="../../#capitol-hill-coding">Capitol Hill Coding</a>, one of our learning games.</p>
+        </div>
+      </div>
+
+      <div class="prog">
+        <div class="prog-top">
+          <div class="palette" aria-label="Arrow blocks">
+            <button class="blk" type="button" data-dir="up" aria-label="Add up">↑</button>
+            <button class="blk" type="button" data-dir="down" aria-label="Add down">↓</button>
+            <button class="blk" type="button" data-dir="left" aria-label="Add left">←</button>
+            <button class="blk" type="button" data-dir="right" aria-label="Add right">→</button>
+          </div>
+          <div class="run-row">
+            <button class="tool" type="button" id="undo">⌫ Undo</button>
+            <button class="tool" type="button" id="clear">Clear</button>
+            <button class="run" type="button" id="run">▶ Run</button>
+          </div>
+        </div>
+        <ol class="strip" id="strip" aria-label="Widget's program" data-empty="Your program goes here. Tap an arrow to add a block."></ol>
+        <p class="slots" id="slots"></p>
+      </div>
+
+      <div class="cab-controls">
+        <p class="hint">Eight puzzles, about 5 minutes.</p>
+        <div class="cab-btns">
+          <button class="cab-btn" id="mute" type="button">🔊 Sound on</button>
+        </div>
+      </div>
+    </div>
+    <p class="sr-only" aria-live="polite" id="live"></p>
+
+    <div class="how">
+      <section class="win">
+        <div class="win-title"><span>HOW.TXT</span></div>
+        <div class="win-body">
+          <h2>How to play</h2>
+          <ul>
+            <li>Each arrow block moves Widget one square that way.</li>
+            <li>Line up blocks, then press <b>Run</b>. Widget does them in order.</li>
+            <li>Boxes and puddles are in the way. Widget stops with a bonk, and the block that bumped turns red. Fix it and run again.</li>
+            <li>Gears ⚙ have to be picked up before the battery will charge.</li>
+            <li>Tap a block in your program to take it out.</li>
+          </ul>
+        </div>
+      </section>
+      <section class="win">
+        <div class="win-title"><span>KEYS.TXT</span></div>
+        <div class="win-body">
+          <h2>With a keyboard</h2>
+          <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> add blocks.</p>
+          <p><kbd>Backspace</kbd> takes the last block back out.</p>
+          <p><kbd>Enter</kbd> runs the program.</p>
+          <p>This is what programmers do: plan the steps, run them, find the bug, fix it.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="free-note">
+      <p><b>This is a Free Arcade game.</b> It's free forever: nothing to unlock, nothing to buy, no ads and no accounts. It's a little warm-up, not one of our full learning adventures.</p>
+      <p>Your best time is saved in this browser on this device, and nothing is sent anywhere.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="fine">© 2026 PNW Kid Software · <a href="../../#arcade">Back to the Free Arcade</a> · <a href="../../">See our learning games</a></p>
+  </div>
+</footer>
+
+<script src="../arcade.js"></script>
+<script>
+(() => {
+  'use strict';
+  const { store, Sound, bindMute, crisp, roundRect, time, reducedMotion } = window.Arcade;
+
+  const W = 480, H = 360;
+  const COLS = 7, ROWS = 5, T = 54;
+  const GX = (W - COLS * T) / 2, GY = 70;
+  const MAX = 20;          // blocks a program can hold
+  const STEP = 0.36;       // seconds per move
+
+  // . grass   # box   ~ puddle   W Widget   B battery   G gear
+  const LEVELS = [
+    { hint: 'Tap → four times, then press Run.', map: [
+      '.......',
+      '.......',
+      '.W...B.',
+      '.......',
+      '.......'] },
+    { hint: 'Widget can go down, too.', map: [
+      '.......',
+      '.W.....',
+      '.......',
+      '.......',
+      '...B...'] },
+    { hint: 'A box is in the way. Go around it!', map: [
+      '.......',
+      '.......',
+      '.W.#.B.',
+      '.......',
+      '.......'] },
+    { hint: "Widget can't swim. Stay out of the puddles.", map: [
+      '.......',
+      '.W~....',
+      '..~.~..',
+      '....~B.',
+      '.......'] },
+    { hint: 'Grab the gear first. The battery needs it.', map: [
+      '...G...',
+      '.......',
+      '.W...B.',
+      '.......',
+      '.......'] },
+    { hint: 'A long, twisty road. Plan it one turn at a time.', map: [
+      '.W#....',
+      '..#.#..',
+      '..#.#..',
+      '....#.B',
+      '~~~....'] },
+    { hint: 'Two gears this time. Get both!', map: [
+      '.G.#...',
+      '...#...',
+      '.W.#.B.',
+      '....G..',
+      '.......'] },
+    { hint: 'The last puzzle. Gear first, then home.', map: [
+      '..#..G.',
+      '..#....',
+      '.W#.##.',
+      'B......',
+      '...~...'] },
+  ];
+  const DIRS = { up: [0, -1, '↑'], down: [0, 1, '↓'], left: [-1, 0, '←'], right: [1, 0, '→'] };
+  const DIR_NAMES = { up: 'up', down: 'down', left: 'left', right: 'right' };
+
+  const canvas = document.getElementById('game');
+  const view = crisp(canvas, W, H);
+  const ctx = view.ctx;
+  const $ = (id) => document.getElementById(id);
+  const live = $('live');
+  const strip = $('strip');
+
+  // ---------- State ----------
+  let state = 'title';           // title | edit | run | cleared | done
+  let level = 0, grid, start, battery, gears, program = [];
+  let bot, runAt, runTimer, runs = 0, clock = 0, toast = null, sparks = [], trail = [];
+
+  function load(i) {
+    level = i;
+    const m = LEVELS[i].map;
+    grid = m.map((row) => row.split(''));
+    gears = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const ch = grid[r][c];
+      if (ch === 'W') { start = { c, r }; grid[r][c] = '.'; }
+      if (ch === 'B') { battery = { c, r }; grid[r][c] = '.'; }
+      if (ch === 'G') { gears.push({ c, r, got: false }); grid[r][c] = '.'; }
+    }
+    program = [];
+    resetBot();
+    renderStrip();
+  }
+
+  function resetBot() {
+    bot = { c: start.c, r: start.r, x: start.c, y: start.r, fx: start.c, fy: start.r, t: 1, bonk: 0, happy: 0 };
+    for (const g of gears) g.got = false;
+    trail = [];
+    clearMarks();
+  }
+
+  const blocked = (c, r) => c < 0 || r < 0 || c >= COLS || r >= ROWS || grid[r][c] === '#' || grid[r][c] === '~';
+  const gearsLeft = () => gears.filter((g) => !g.got).length;
+
+  function say(text, color = '#ffe9a8', secs = 2.4) { toast = { text, color, t: secs }; live.textContent = text; }
+
+  // ---------- The program strip ----------
+  function renderStrip() {
+    strip.textContent = '';
+    program.forEach((d, i) => {
+      const li = document.createElement('li');
+      li.style.display = 'contents';
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'blk'; b.textContent = DIRS[d][2];
+      b.setAttribute('aria-label', `Step ${i + 1}: ${DIR_NAMES[d]}. Tap to remove.`);
+      b.addEventListener('click', () => { if (state !== 'edit') return; program.splice(i, 1); edited(); });
+      li.appendChild(b); strip.appendChild(li);
+    });
+    $('slots').textContent = program.length ? `${program.length} of ${MAX} blocks` : '';
+    const busy = state !== 'edit';
+    for (const b of document.querySelectorAll('.palette .blk')) b.disabled = busy || program.length >= MAX;
+    $('run').disabled = busy || !program.length;
+    $('undo').disabled = busy || !program.length;
+    $('clear').disabled = busy || !program.length;
+  }
+  function stripButton(i) { return strip.querySelectorAll('.blk')[i]; }
+  function clearMarks() { for (const b of strip.querySelectorAll('.blk')) b.classList.remove('now', 'bad'); }
+
+  function edited() {
+    if (bot.c !== start.c || bot.r !== start.r || trail.length) resetBot();
+    renderStrip();
+  }
+  function add(d) {
+    if (state !== 'edit' || program.length >= MAX) return;
+    Sound.unlock();
+    program.push(d);
+    Sound.tone(500 + program.length * 12, 0.04, { vol: 0.035 });
+    edited();
+  }
+
+  // ---------- Running ----------
+  function run() {
+    if (state !== 'edit' || !program.length) return;
+    Sound.unlock();
+    resetBot();
+    runs += 1;
+    state = 'run'; runAt = 0; runTimer = 0.15;
+    renderStrip();
+    trail.push({ c: bot.c, r: bot.r });
+  }
+
+  function stepRun() {
+    clearMarks();
+    if (runAt >= program.length) return finishRun();
+    const d = program[runAt];
+    const el = stripButton(runAt);
+    const nc = bot.c + DIRS[d][0], nr = bot.r + DIRS[d][1];
+    if (blocked(nc, nr)) {
+      if (el) el.classList.add('bad');
+      bot.bonk = 0.6; bot.bonkDir = DIRS[d];
+      Sound.tone(140, 0.18, { vol: 0.05 });
+      const what = nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS ? 'the edge of the park' : grid[nr][nc] === '~' ? 'a puddle' : 'a box';
+      say(`Bonk! Step ${runAt + 1} runs into ${what}. Fix that block and run again.`, '#ffb4a2', 3.4);
+      state = 'edit'; renderStrip();
+      const bad = stripButton(runAt);
+      if (bad) bad.classList.add('bad');
+      return;
+    }
+    if (el) el.classList.add('now');
+    bot.fx = bot.c; bot.fy = bot.r; bot.c = nc; bot.r = nr; bot.t = 0;
+    Sound.tone(330 + runAt * 22, 0.06, { vol: 0.03 });
+    runAt += 1; runTimer = STEP;
+  }
+
+  function arrived() {
+    // after each move lands: pick up gears, check the battery
+    trail.push({ c: bot.c, r: bot.r });
+    for (const g of gears) if (!g.got && g.c === bot.c && g.r === bot.r) {
+      g.got = true; burst(bot.c, bot.r, '#ffd36b', 12);
+      Sound.tune([660, 880], 0.06, { vol: 0.04 });
+      say(gearsLeft() ? `Got a gear! ${gearsLeft()} to go.` : 'Got the gear! Now the battery.', '#ffd36b', 1.6);
+    }
+    if (bot.c === battery.c && bot.r === battery.r && !gearsLeft()) { cleared(); return true; }
+    return false;
+  }
+
+  function finishRun() {
+    state = 'edit'; renderStrip();
+    if (bot.c === battery.c && bot.r === battery.r && gearsLeft()) say('The battery is locked. Pick up every gear first!', '#ffb4a2', 3);
+    else say('Widget ran out of blocks before the battery. Add some more!', '#ffb4a2', 3);
+  }
+
+  function cleared() {
+    clearMarks();
+    state = 'cleared'; bot.happy = 1.5;
+    burst(battery.c, battery.r, '#7fffd4', 26);
+    Sound.tune([523, 659, 784, 1047], 0.08);
+    renderStrip();
+    setTimeout(() => {
+      if (state !== 'cleared') return;
+      if (level === LEVELS.length - 1) return finish();
+      $('cleared-title').textContent = level === 0 ? 'Charged up!' : ['Zap!', 'Beep boop!', 'Nice route!', 'Charged up!', 'Great plan!', 'Bzzzt!'][level % 6];
+      $('cleared-text').textContent = `Puzzle ${level + 1} of ${LEVELS.length} done, with ${program.length} block${program.length === 1 ? '' : 's'}.`;
+      show('cleared');
+    }, reducedMotion ? 400 : 1000);
+  }
+
+  function burst(c, r, color, n) {
+    const x = GX + c * T + T / 2, y = GY + r * T + T / 2;
+    if (reducedMotion) n = Math.min(n, 5);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = 40 + Math.random() * 90;
+      sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, t: 0.7 + Math.random() * 0.4, color });
+    }
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    if ((state === 'edit' || state === 'run') && !document.hidden) clock += dt;
+    if (bot.t < 1) {
+      bot.t = Math.min(1, bot.t + dt / (STEP * 0.8));
+      const e = bot.t < 0.5 ? 2 * bot.t * bot.t : 1 - Math.pow(-2 * bot.t + 2, 2) / 2;
+      bot.x = bot.fx + (bot.c - bot.fx) * e; bot.y = bot.fy + (bot.r - bot.fy) * e;
+      if (bot.t >= 1 && state === 'run' && arrived()) return;
+    }
+    if (state === 'run') {
+      runTimer -= dt;
+      if (runTimer <= 0 && bot.t >= 1) stepRun();
+    }
+    if (bot.bonk > 0) bot.bonk -= dt;
+    if (bot.happy > 0) bot.happy -= dt;
+    for (const s of sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 120 * dt; s.t -= dt; }
+    sparks = sparks.filter((s) => s.t > 0);
+    if (toast) { toast.t -= dt; if (toast.t <= 0) toast = null; }
+  }
+
+  // ---------- Draw ----------
+  function draw(t) {
+    view.begin();
+    // sky and the old brick water tower in Volunteer Park
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#9fc7de'); sky.addColorStop(1, '#d7ebf2');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#a65a3f'; ctx.fillRect(438, 24, 34, 70);
+    ctx.fillStyle = '#4a4e69'; ctx.beginPath(); ctx.moveTo(432, 26); ctx.lineTo(455, 6); ctx.lineTo(478, 26); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; for (let y = 32; y < 92; y += 8) ctx.fillRect(438, y, 34, 1);
+    ctx.fillStyle = '#3f8a5f'; ctx.fillRect(0, 60, W, H - 60);
+
+    // tiles
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const x = GX + c * T, y = GY + r * T;
+      ctx.fillStyle = (r + c) % 2 ? '#7cc47f' : '#8ed08f';
+      ctx.fillRect(x, y, T, T);
+      if (grid[r][c] === '#') drawBox(x, y);
+      if (grid[r][c] === '~') drawPuddle(x, y, t);
+    }
+    ctx.strokeStyle = 'rgba(30,70,40,.35)'; ctx.lineWidth = 2;
+    ctx.strokeRect(GX, GY, COLS * T, ROWS * T);
+
+    // where Widget has been on this run
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    for (const p of trail) { ctx.beginPath(); ctx.arc(GX + p.c * T + T / 2, GY + p.r * T + T / 2, 4, 0, Math.PI * 2); ctx.fill(); }
+    // the start pad
+    ctx.strokeStyle = 'rgba(29,53,87,.45)'; ctx.setLineDash([5, 4]); ctx.lineWidth = 2;
+    roundRect(ctx, GX + start.c * T + 6, GY + start.r * T + 6, T - 12, T - 12, 8); ctx.stroke(); ctx.setLineDash([]);
+
+    for (const g of gears) if (!g.got) drawGear(GX + g.c * T + T / 2, GY + g.r * T + T / 2, t);
+    drawBattery(GX + battery.c * T + T / 2, GY + battery.r * T + T / 2, t);
+
+    let bx = GX + bot.x * T + T / 2, by = GY + bot.y * T + T / 2;
+    if (bot.bonk > 0 && bot.bonkDir && !reducedMotion) {
+      const k = Math.sin((0.6 - bot.bonk) * 30) * bot.bonk * 8;
+      bx += bot.bonkDir[0] * Math.abs(k); by += bot.bonkDir[1] * Math.abs(k);
+    }
+    drawWidget(bx, by, t);
+
+    for (const s of sparks) { ctx.globalAlpha = Math.min(1, s.t * 2); ctx.fillStyle = s.color; ctx.fillRect(s.x - 2, s.y - 2, 4, 4); }
+    ctx.globalAlpha = 1;
+
+    drawHud();
+  }
+
+  function drawBox(x, y) {
+    ctx.fillStyle = '#c08a4e'; roundRect(ctx, x + 7, y + 7, T - 14, T - 14, 4); ctx.fill();
+    ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 2;
+    roundRect(ctx, x + 7, y + 7, T - 14, T - 14, 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 9, y + 9); ctx.lineTo(x + T - 9, y + T - 9); ctx.moveTo(x + T - 9, y + 9); ctx.lineTo(x + 9, y + T - 9); ctx.stroke();
+  }
+  function drawPuddle(x, y, t) {
+    ctx.fillStyle = '#5aa9d6';
+    ctx.beginPath(); ctx.ellipse(x + T / 2, y + T / 2, T / 2 - 4, T / 2 - 10, 0, 0, Math.PI * 2); ctx.fill();
+    const k = reducedMotion ? 0.5 : (t * 0.6 + x * 0.01) % 1;
+    ctx.strokeStyle = `rgba(255,255,255,${0.6 * (1 - k)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(x + T / 2, y + T / 2, 4 + k * 14, 2 + k * 7, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  function drawGear(x, y, t) {
+    ctx.save(); ctx.translate(x, y); if (!reducedMotion) ctx.rotate(t * 0.8);
+    ctx.fillStyle = '#f2b705';
+    for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.fillRect(-3.5, -16, 7, 8); }
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8ed08f'; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function drawBattery(x, y, t) {
+    const locked = gearsLeft() > 0;
+    const glow = locked ? 0 : 0.35 + (reducedMotion ? 0 : 0.2 * Math.sin(t * 4));
+    if (glow) { ctx.fillStyle = `rgba(120,255,170,${glow})`; ctx.beginPath(); ctx.arc(x, y, 24, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#2b2d33'; roundRect(ctx, x - 9, y - 19, 18, 34, 4); ctx.fill();
+    ctx.fillRect(x - 4, y - 23, 8, 5);
+    ctx.fillStyle = locked ? '#7d8597' : '#3ddc84'; roundRect(ctx, x - 6, y - 16, 12, 28, 2); ctx.fill();
+    ctx.fillStyle = locked ? '#cfd3dc' : '#fff8b0';
+    ctx.beginPath(); ctx.moveTo(x + 2, y - 13); ctx.lineTo(x - 4, y + 1); ctx.lineTo(x, y + 1); ctx.lineTo(x - 2, y + 10); ctx.lineTo(x + 4, y - 3); ctx.lineTo(x, y - 3); ctx.closePath(); ctx.fill();
+    if (locked) {
+      ctx.fillStyle = '#f2b705'; ctx.font = '700 13px Fredoka, ui-rounded, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(`⚙${gearsLeft()}`, x + 15, y - 18);
+    }
+  }
+  function drawWidget(x, y, t) {
+    const hop = bot.happy > 0 && !reducedMotion ? -Math.abs(Math.sin(t * 12)) * 5 : 0;
+    y += hop;
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x, y + 21 - hop, 15, 4, 0, 0, Math.PI * 2); ctx.fill();
+    // wheels
+    ctx.fillStyle = '#23262e';
+    ctx.beginPath(); ctx.arc(x - 9, y + 16, 5, 0, Math.PI * 2); ctx.arc(x + 9, y + 16, 5, 0, Math.PI * 2); ctx.fill();
+    // body with a gear badge
+    ctx.fillStyle = '#2bb5a5'; roundRect(ctx, x - 12, y + 1, 24, 15, 4); ctx.fill();
+    ctx.fillStyle = '#ffc93c'; ctx.beginPath(); ctx.arc(x, y + 8.5, 3.5, 0, Math.PI * 2); ctx.fill();
+    // antenna
+    ctx.strokeStyle = '#2bb5a5'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 24); ctx.stroke();
+    ctx.fillStyle = bot.happy > 0 ? '#7fffd4' : '#d8f7f3'; ctx.beginPath(); ctx.arc(x, y - 26, 3, 0, Math.PI * 2); ctx.fill();
+    // head and screen face
+    ctx.fillStyle = '#2bb5a5'; roundRect(ctx, x - 14, y - 19, 28, 20, 5); ctx.fill();
+    ctx.fillStyle = '#12233b'; roundRect(ctx, x - 10.5, y - 15.5, 21, 13, 3); ctx.fill();
+    ctx.fillStyle = '#7fe0f0';
+    if (bot.bonk > 0) {
+      ctx.font = '700 9px ui-monospace, Menlo, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('x  x', x, y - 10);
+    } else {
+      ctx.fillRect(x - 6, y - 12, 3, 4); ctx.fillRect(x + 3, y - 12, 3, 4);
+      ctx.strokeStyle = '#7fe0f0'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(x, y - 8, 3, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+    }
+  }
+
+  function drawHud() {
+    ctx.fillStyle = 'rgba(20,24,50,.78)'; roundRect(ctx, 8, 8, 420, 50, 10); ctx.fill();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#ffe9a8'; ctx.font = '700 17px Fredoka, ui-rounded, sans-serif';
+    ctx.fillText(`Puzzle ${level + 1} of ${LEVELS.length}`, 20, 29);
+    ctx.fillStyle = '#d7defa'; ctx.font = '600 13px Fredoka, ui-rounded, sans-serif';
+    ctx.fillText(LEVELS[level].hint, 20, 48, 396);
+    ctx.fillStyle = '#fff'; ctx.font = '700 15px Fredoka, ui-rounded, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(time(clock), 416, 29);
+    if (toast) {
+      ctx.globalAlpha = Math.min(1, toast.t * 2);
+      ctx.font = '700 15px Fredoka, ui-rounded, sans-serif';
+      const w = Math.min(W - 20, ctx.measureText(toast.text).width + 26);
+      ctx.fillStyle = 'rgba(20,24,50,.88)';
+      roundRect(ctx, (W - w) / 2, H - 40, w, 30, 15); ctx.fill();
+      ctx.fillStyle = toast.color; ctx.textAlign = 'center';
+      ctx.fillText(toast.text, W / 2, H - 20, W - 36);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------- Screens ----------
+  const screens = { start: $('start'), cleared: $('cleared'), done: $('done') };
+  function show(name) {
+    for (const [k, el] of Object.entries(screens)) el.hidden = k !== name;
+    const btn = name && screens[name].querySelector('button');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  function bringIntoView() {
+    const cab = document.querySelector('.cabinet');
+    const r = cab.getBoundingClientRect();
+    if (r.top < 64 || r.bottom > window.innerHeight) cab.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+  const BEST = 'pnw-arcade-widgetspath-best';
+  function showBest() {
+    const best = Number(store.get(BEST));
+    $('go-best').textContent = best ? `8 puzzles · best ${time(best)}` : '8 puzzles';
+  }
+
+  function begin() {
+    Sound.unlock();
+    clock = 0; runs = 0; sparks = []; toast = null;
+    load(0);
+    state = 'edit'; renderStrip();
+    show(null); bringIntoView();
+    document.querySelector('.palette .blk[data-dir="right"]').focus({ preventScroll: true });
+    live.textContent = `Puzzle 1. ${LEVELS[0].hint}`;
+  }
+  function nextLevel() {
+    load(level + 1);
+    state = 'edit'; renderStrip();
+    show(null);
+    document.querySelector('.palette .blk').focus({ preventScroll: true });
+    live.textContent = `Puzzle ${level + 1}. ${LEVELS[level].hint}`;
+  }
+  function finish() {
+    state = 'done';
+    const prev = Number(store.get(BEST));
+    const isBest = !prev || clock < prev;
+    if (isBest) store.set(BEST, String(Math.round(clock * 10) / 10));
+    $('done-stats').textContent = `All ${LEVELS.length} puzzles in ${time(clock)}. You pressed Run ${runs} time${runs === 1 ? '' : 's'}. Every bonk was a bug you found and fixed!`;
+    $('done-best').textContent = isBest ? (prev ? "That's your best time!" : 'Your first time through. Can you beat it?') : `Your best is ${time(prev)}.`;
+    Sound.tune([523, 659, 784, 659, 784, 1047], 0.11);
+    renderStrip();
+    show('done');
+  }
+
+  $('go').addEventListener('click', begin);
+  $('again').addEventListener('click', begin);
+  $('next').addEventListener('click', nextLevel);
+  $('run').addEventListener('click', run);
+  $('undo').addEventListener('click', () => { if (state === 'edit' && program.length) { program.pop(); edited(); } });
+  $('clear').addEventListener('click', () => { if (state === 'edit') { program = []; edited(); } });
+  for (const b of document.querySelectorAll('.palette .blk')) b.addEventListener('click', () => add(b.dataset.dir));
+  bindMute($('mute'));
+
+  const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (state !== 'edit' && state !== 'run') return;
+    if (KEYS[e.key]) { e.preventDefault(); add(KEYS[e.key]); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); if (state === 'edit' && program.length) { program.pop(); edited(); } }
+    else if (e.key === 'Enter' && !(e.target.closest && e.target.closest('button:not(.blk)'))) { e.preventDefault(); run(); }
+  });
+
+  // ---------- Loop ----------
+  load(0);
+  renderStrip();
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw(now / 1000);
+    requestAnimationFrame(frame);
+  }
+  showBest();
+  requestAnimationFrame(frame);
+  if (document.fonts && document.fonts.load) document.fonts.load('700 20px Fredoka');
+})();
+</script>
+</body>
+</html>
